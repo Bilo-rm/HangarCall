@@ -1,4 +1,5 @@
 import { Tabs } from 'expo-router';
+
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 
@@ -7,36 +8,28 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: '#ffd33d',
-        headerStyle: {
-          backgroundColor: '#25292e',
-        },
-        headerShadowVisible: false,
-        headerTintColor: '#fff',
-        tabBarStyle: {
-          backgroundColor: '#25292e',
-        },
       }}
     >
-      <Tabs.Screen 
-        name="index" 
+      <Tabs.Screen
+        name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ focused, color }) => (
+          tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? 'home-sharp' : 'home-outline'} color={color} size={24} />
           ),
-        }} 
+        }}
       />
-      <Tabs.Screen 
-        name="Basket" 
+      <Tabs.Screen
+        name="basket"
         options={{
-          title: 'about',
-          tabBarIcon: ({ focused, color }) => (
-            <Ionicons name={focused ? 'about-sharp' : 'about-outline'} color={color} size={24} />
+          title: 'Basket',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'basket-sharp' : 'basket-outline'} color={color} size={24}/>
           ),
-        }} 
+        }}
       />
       <Tabs.Screen 
-        name="Favorite" 
+        name="favorite" 
         options={{
           title: 'Favorite',
           tabBarIcon: ({ focused, color }) => (
@@ -45,7 +38,7 @@ export default function TabLayout() {
         }} 
       />
       <Tabs.Screen 
-        name="Profile" 
+        name="profile" 
         options={{
           title: 'Profile',
           tabBarIcon: ({ focused, color }) => (
