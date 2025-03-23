@@ -1,5 +1,6 @@
-import { View, Text, Image, FlatList, StyleSheet, ScrollView } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { View, Text, Image, FlatList, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router"; // ✅ Import useRouter
+import { useState } from "react";
 
 const restaurants = [
   {
@@ -9,7 +10,7 @@ const restaurants = [
     rating: 4.5,
     description: "Delicious burgers made fresh daily.",
     menu: [
-      { id: "m1", name: "Cheeseburger", price: "$5.99" },
+      { id: "m1", name: "Cheeseburger", price: "$6.99" },
       { id: "m2", name: "French Fries", price: "$2.99" },
     ],
   },
@@ -39,6 +40,7 @@ const restaurants = [
 
 export default function RestaurantDetail() {
   const { id } = useLocalSearchParams();
+  const router = useRouter(); // ✅ Initialize router
   const restaurant = restaurants.find((r) => r.id === id);
 
   if (!restaurant) {
@@ -49,30 +51,49 @@ export default function RestaurantDetail() {
     );
   }
 
+  const [basket, setBasket] = useState<{ id: string; name: string; price: string }[]>([]);
+
+  // ✅ Define addToBasket function
+  const addToBasket = (item: { id: string; name: string; price: string }) => {
+    setBasket((prevBasket) => [...prevBasket, item]);
+  };
+
   return (
-    <ScrollView style={styles.container}>
-      {/* Restaurant Image */}
-      <Image source={restaurant.image} style={styles.image} />
+    <View style={styles.container}>
+      <ScrollView>
+        {/* Restaurant Image */}
+        <Image source={restaurant.image} style={styles.image} />
 
-      {/* Restaurant Name & Rating */}
-      <Text style={styles.name}>{restaurant.name}</Text>
-      <Text style={styles.rating}>⭐ {restaurant.rating}</Text>
-      <Text style={styles.description}>{restaurant.description}</Text>
+        {/* Restaurant Name & Rating */}
+        <Text style={styles.name}>{restaurant.name}</Text>
+        <Text style={styles.rating}>⭐ {restaurant.rating}</Text>
+        <Text style={styles.description}>{restaurant.description}</Text>
 
-      {/* Menu List */}
-      <Text style={styles.menuTitle}>Menu</Text>
-      <FlatList
-        data={restaurant.menu}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.menuItem}>
-            <Text style={styles.menuName}>{item.name}</Text>
-            <Text style={styles.menuPrice}>{item.price}</Text>
-          </View>
-        )}
-        scrollEnabled={false} // Prevents FlatList scrolling inside ScrollView
-      />
-    </ScrollView>
+        {/* Menu List */}
+        <Text style={styles.menuTitle}>Menu</Text>
+        <FlatList
+          data={restaurant.menu}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View style={styles.menuItem}>
+              <Text style={styles.menuName}>{item.name}</Text>
+              <Text style={styles.menuPrice}>{item.price}</Text>
+              <TouchableOpacity style={styles.addButton} onPress={() => addToBasket(item)}>
+                <Text style={styles.addButtonText}>Add</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          scrollEnabled={false} // Prevents FlatList scrolling inside ScrollView
+        />
+      </ScrollView>
+
+      {/* Floating "Go to Basket" Button */}
+      {basket.length > 0 && (
+        <TouchableOpacity style={styles.basketButton} onPress={() => router.push({ pathname: "/basket", params: { basket } })}>
+          <Text style={styles.basketButtonText}>Go to Basket ({basket.length})</Text>
+        </TouchableOpacity>
+      )}
+    </View>
   );
 }
 
@@ -122,6 +143,31 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   menuPrice: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  addButton: {
+    backgroundColor: "#ffd33d",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 5,
+  },
+  addButtonText: {
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  basketButton: {
+    position: "absolute",
+    bottom: 20,
+    left: "50%",
+    transform: [{ translateX: -75 }],
+    backgroundColor: "#ff6600",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+  },
+  basketButtonText: {
+    color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
   },

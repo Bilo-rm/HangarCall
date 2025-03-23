@@ -1,7 +1,6 @@
 import { View, Text, StyleSheet, FlatList, Image, TextInput, TouchableOpacity } from "react-native";
 import { useState } from "react";
-import { Route } from "expo-router/build/Route";
-import { router, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 
 const restaurants = [
   {
@@ -47,11 +46,11 @@ export default function HomeScreen() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <TouchableOpacity onPress={() => router.push(`/restaurant/${item.id}`)}>
-          <View style={styles.card}>
-            <Image source={item.image } style={styles.image} />
-            <Text style={styles.name}>{item.name}</Text>
-            <Text style={styles.rating}>⭐ {item.rating}</Text>
-          </View>
+            <View style={styles.card}>
+              <Image source={item.image} style={styles.image} />
+              <Text style={styles.name}>{item.name}</Text>
+              <Text style={styles.rating}>⭐ {item.rating}</Text>
+            </View>
           </TouchableOpacity>
         )}
       />
@@ -72,30 +71,29 @@ const styles = StyleSheet.create({
   },
   searchBar: {
     height: 40,
-    backgroundColor: "#f1f1f1",
-    borderRadius: 10,
+    borderColor: "#ddd",
+    borderWidth: 1,
+    borderRadius: 8,
     paddingHorizontal: 10,
-    marginBottom: 10,
+    marginBottom: 20,
   },
   card: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
+    flexDirection: "row",
+    marginBottom: 20,
     padding: 10,
-    marginBottom: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
+    backgroundColor: "#f9f9f9",
+    borderRadius: 10,
+    alignItems: "center",
   },
   image: {
-    width: "100%",
-    height: 150,
-    borderRadius: 10,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 15,
   },
   name: {
     fontSize: 18,
     fontWeight: "bold",
-    marginTop: 5,
   },
   rating: {
     fontSize: 16,
