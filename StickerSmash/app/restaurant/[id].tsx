@@ -1,93 +1,76 @@
-import { View, Text, Image, FlatList, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router"; // ✅ Import useRouter
-import { useState } from "react";
+import { View, Text, Image, FlatList, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useState, useEffect } from "react";
 
-const restaurants = [
-  {
-    id: "1",
-    name: "Burger King",
-    image: require("./../../assets/images/download.png"),
-    rating: 4.5,
-    description: "Delicious burgers made fresh daily.",
-    menu: [
-      { id: "m1", name: "Cheeseburger", price: "$6.99" },
-      { id: "m2", name: "French Fries", price: "$2.99" },
-    ],
-  },
-  {
-    id: "2",
-    name: "Pizza Hut",
-    image: require("./../../assets/images/pizahut.png"),
-    rating: 4.2,
-    description: "Freshly baked pizzas with various toppings.",
-    menu: [
-      { id: "m1", name: "Pepperoni Pizza", price: "$12.99" },
-      { id: "m2", name: "Garlic Bread", price: "$4.99" },
-    ],
-  },
-  {
-    id: "3",
-    name: "Sushi Place",
-    image: require("./../../assets/images/sushi.png"),
-    rating: 4.8,
-    description: "Authentic sushi with the freshest ingredients.",
-    menu: [
-      { id: "m1", name: "Salmon Roll", price: "$8.99" },
-      { id: "m2", name: "Tuna Nigiri", price: "$6.99" },
-    ],
-  },
-];
+interface MenuItem {
+  id: string;
+  name: string;
+  price: number;
+}
 
 export default function RestaurantDetail() {
   const { id } = useLocalSearchParams();
-  const router = useRouter(); // ✅ Initialize router
-  const restaurant = restaurants.find((r) => r.id === id);
+  const router = useRouter();
+  const [restaurant, setRestaurant] = useState<{ name: string; image: string; rating: number; description: string } | null>(null);
+  const [menu, setMenu] = useState<MenuItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [basket, setBasket] = useState<MenuItem[]>([]);
 
-  if (!restaurant) {
+  useEffect(() => {
+    const fetchMenu = async () => {
+      try {
+        const response = await fetch(`http://172.20.19.199:5000/menus/${id}/menu`);
+        const data = await response.json();
+        setMenu(data); // ✅ Set menu items
+      } catch (error) {
+        console.error("Error fetching menu:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMenu();
+  }, [id]);
+
+  const addToBasket = (item: MenuItem) => {
+    setBasket((prevBasket) => [...prevBasket, item]);
+  };
+
+  if (loading) {
     return (
       <View style={styles.container}>
-        <Text style={styles.error}>Restaurant not found!</Text>
+        <ActivityIndicator size="large" color="#0000ff" />
       </View>
     );
   }
 
-  const [basket, setBasket] = useState<{ id: string; name: string; price: string }[]>([]);
-
-  // ✅ Define addToBasket function
-  const addToBasket = (item: { id: string; name: string; price: string }) => {
-    setBasket((prevBasket) => [...prevBasket, item]);
-  };
-
   return (
     <View style={styles.container}>
       <ScrollView>
-        {/* Restaurant Image */}
-        <Image source={restaurant.image} style={styles.image} />
-
-        {/* Restaurant Name & Rating */}
-        <Text style={styles.name}>{restaurant.name}</Text>
-        <Text style={styles.rating}>⭐ {restaurant.rating}</Text>
-        <Text style={styles.description}>{restaurant.description}</Text>
+        {/* Restaurant Details */}
+        <Text style={styles.name}>{restaurant?.name ?? "Restaurant"}</Text>
+        <Text style={styles.rating}>⭐ {restaurant?.rating ?? "N/A"}</Text>
+        <Text style={styles.description}>{restaurant?.description ?? "No description available"}</Text>
 
         {/* Menu List */}
         <Text style={styles.menuTitle}>Menu</Text>
         <FlatList
-          data={restaurant.menu}
+          data={menu}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <View style={styles.menuItem}>
               <Text style={styles.menuName}>{item.name}</Text>
-              <Text style={styles.menuPrice}>{item.price}</Text>
+              <Text style={styles.menuPrice}>${item.price.toFixed(2)}</Text>
               <TouchableOpacity style={styles.addButton} onPress={() => addToBasket(item)}>
                 <Text style={styles.addButtonText}>Add</Text>
               </TouchableOpacity>
             </View>
           )}
-          scrollEnabled={false} // Prevents FlatList scrolling inside ScrollView
+          scrollEnabled={false}
         />
       </ScrollView>
 
-      {/* Floating "Go to Basket" Button */}
+      {/* Basket Button */}
       {basket.length > 0 && (
         <TouchableOpacity style={styles.basketButton} onPress={() => router.push({ pathname: "/basket", params: { basket } })}>
           <Text style={styles.basketButtonText}>Go to Basket ({basket.length})</Text>
@@ -102,17 +85,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
     padding: 16,
-  },
-  error: {
-    fontSize: 20,
-    color: "red",
-    textAlign: "center",
-  },
-  image: {
-    width: "100%",
-    height: 200,
-    borderRadius: 10,
-    marginBottom: 10,
   },
   name: {
     fontSize: 24,

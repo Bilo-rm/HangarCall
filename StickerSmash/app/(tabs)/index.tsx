@@ -1,35 +1,31 @@
-import { View, Text, StyleSheet, FlatList, Image, TextInput, TouchableOpacity } from "react-native";
-import { useState } from "react";
+import { View, Text, StyleSheet, FlatList, Image, TextInput, TouchableOpacity, ActivityIndicator } from "react-native";
+import { useState, useEffect } from "react";
 import { useRouter } from "expo-router";
-
-const restaurants = [
-  {
-    id: "1",
-    name: "Burger King",
-    image: require("./../../assets/images/download.png"),
-    rating: 4.5,
-  },
-  {
-    id: "2",
-    name: "Pizza Hut",
-    image: require("./../../assets/images/pizahut.png"),
-    rating: 4.2,
-  },
-  {
-    id: "3",
-    name: "Sushi Place",
-    image: require("./../../assets/images/sushi.png"),
-    rating: 4.8,
-  },
-];
 
 export default function HomeScreen() {
   const [search, setSearch] = useState("");
+  const [restaurants, setRestaurants] = useState([]);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
+
+  useEffect(() => {
+    const fetchRestaurants = async () => {
+      try {
+        const response = await fetch("http://172.20.19.199:5000/restaurants");
+        const data = await response.json();
+        setRestaurants(data);
+      } catch (error) {
+        console.error("Error fetching restaurants:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRestaurants();
+  }, []);
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <Text style={styles.header}>Welcome, User! 🍽️</Text>
 
       {/* Search Bar */}
@@ -40,20 +36,24 @@ export default function HomeScreen() {
         onChangeText={setSearch}
       />
 
-      {/* Restaurant List */}
-      <FlatList
-        data={restaurants.filter((r) => r.name.toLowerCase().includes(search.toLowerCase()))}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => router.push(`/restaurant/${item.id}`)}>
-            <View style={styles.card}>
-              <Image source={item.image} style={styles.image} />
-              <Text style={styles.name}>{item.name}</Text>
-              <Text style={styles.rating}>⭐ {item.rating}</Text>
-            </View>
-          </TouchableOpacity>
-        )}
-      />
+      {/* Loading Indicator */}
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" />
+      ) : (
+        <FlatList
+          data={restaurants.filter((r) => r.name.toLowerCase().includes(search.toLowerCase()))}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <TouchableOpacity onPress={() => router.push(`/restaurant/${item.id}`)}>
+              <View style={styles.card}>
+                <Image source={{ uri: item.image }} style={styles.image} />
+                <Text style={styles.name}>{item.name}</Text>
+                <Text style={styles.rating}>⭐ {item.rating}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+      )}
     </View>
   );
 }
