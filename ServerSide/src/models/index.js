@@ -16,14 +16,16 @@ const User = sequelize.define("User", {
 const Restaurant = sequelize.define("Restaurant", {
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   name: { type: DataTypes.STRING, allowNull: false },
-  location: { type: DataTypes.STRING, allowNull: false }
+  location: { type: DataTypes.STRING, allowNull: false },
+  image: { type: DataTypes.STRING, allowNull: true },
 });
 
 const Menu = sequelize.define("Menu", {
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   restaurantId: { type: DataTypes.UUID, allowNull: false, references: { model: 'Restaurants', key: 'id' } },
   name: { type: DataTypes.STRING, allowNull: false },
-  price: { type: DataTypes.FLOAT, allowNull: false }
+  price: { type: DataTypes.FLOAT, allowNull: false },
+  image: { type: DataTypes.STRING, allowNull: true },
 });
 
 const Cart = sequelize.define("Cart", {

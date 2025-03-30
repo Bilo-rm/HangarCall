@@ -1,11 +1,15 @@
 import { View, Text, Image, FlatList, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useAuth } from "../../context/AuthContext";
 import { useState, useEffect } from "react";
+
+
 
 interface MenuItem {
   id: string;
   name: string;
   price: number;
+  
 }
 
 export default function RestaurantDetail() {
@@ -15,13 +19,14 @@ export default function RestaurantDetail() {
   const [menu, setMenu] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [basket, setBasket] = useState<MenuItem[]>([]);
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     const fetchMenu = async () => {
       try {
-        const response = await fetch(`http://172.20.19.199:5000/menus/${id}/menu`);
+        const response = await fetch(`http://192.168.2.1:5000/menus/${id}/menu`);
         const data = await response.json();
-        setMenu(data); // ✅ Set menu items
+        setMenu(data); 
       } catch (error) {
         console.error("Error fetching menu:", error);
       } finally {
@@ -49,8 +54,9 @@ export default function RestaurantDetail() {
       <ScrollView>
         {/* Restaurant Details */}
         <Text style={styles.name}>{restaurant?.name ?? "Restaurant"}</Text>
-        <Text style={styles.rating}>⭐ {restaurant?.rating ?? "N/A"}</Text>
-        <Text style={styles.description}>{restaurant?.description ?? "No description available"}</Text>
+        <Text style={styles.rating}>⭐ {restaurant?.rating ?? "4.5"}</Text>
+        <Text style={styles.description}>{restaurant?.description ?? ""}</Text>
+        
 
         {/* Menu List */}
         <Text style={styles.menuTitle}>Menu</Text>
@@ -59,6 +65,7 @@ export default function RestaurantDetail() {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <View style={styles.menuItem}>
+              <Image source={{ uri: item.image }} style={styles.image} />
               <Text style={styles.menuName}>{item.name}</Text>
               <Text style={styles.menuPrice}>${item.price.toFixed(2)}</Text>
               <TouchableOpacity style={styles.addButton} onPress={() => addToBasket(item)}>
@@ -142,5 +149,11 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  image: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 15,
   },
 });

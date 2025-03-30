@@ -2,8 +2,8 @@ const { Menu, Restaurant } = require("../models");
 
 exports.addMenuItem = async (req, res) => {
   try {
-    const { id } = req.params; // Restaurant ID from URL
-    const { name, price } = req.body; // Corrected: No duplicate 'id'
+    const { id } = req.params; 
+    const { name, price, image } = req.body; 
 
     if (!name || !price) {
       return res.status(400).json({ message: "Name and price are required" });
@@ -16,7 +16,7 @@ exports.addMenuItem = async (req, res) => {
     }
 
     // Corrected: Use 'Menu' instead of 'MenuItem'
-    const menuItem = await Menu.create({ name, price, restaurantId: id });
+    const menuItem = await Menu.create({ name, price, restaurantId: id, image});
 
     res.status(201).json({ message: "Menu item added", menuItem });
   } catch (error) {

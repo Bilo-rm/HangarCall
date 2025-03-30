@@ -2,6 +2,8 @@ import { View, Text, StyleSheet, FlatList, Image, TextInput, TouchableOpacity, A
 import { useState, useEffect } from "react";
 import { useRouter } from "expo-router";
 
+const API_URL = "http://192.168.2.1:5000";
+
 export default function HomeScreen() {
   const [search, setSearch] = useState("");
   const [restaurants, setRestaurants] = useState([]);
@@ -11,7 +13,7 @@ export default function HomeScreen() {
   useEffect(() => {
     const fetchRestaurants = async () => {
       try {
-        const response = await fetch("http://172.20.19.199:5000/restaurants");
+        const response = await fetch(`${API_URL}/restaurants`);
         const data = await response.json();
         setRestaurants(data);
       } catch (error) {

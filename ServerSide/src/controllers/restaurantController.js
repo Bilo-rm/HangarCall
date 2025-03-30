@@ -2,12 +2,12 @@ const { Restaurant } = require("../models");
 
 exports.addRestaurant = async (req, res) => {
   try {
-    const { name, location } = req.body;
+    const { name, location, image  } = req.body;
     if (!name || !location) {
       return res.status(400).json({ message: "Name and location are required" });
     }
 
-    const restaurant = await Restaurant.create({ name, location });
+    const restaurant = await Restaurant.create({ name, location,image  });
     res.status(201).json({ message: "Restaurant added", restaurant });
   } catch (error) {
     console.error("Error adding restaurant:", error);
