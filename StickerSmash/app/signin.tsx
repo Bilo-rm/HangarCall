@@ -12,15 +12,25 @@ export default function SignIn() {
   const { login } = useAuth();
 
   const handleLogin = async () => {
-    const token = await loginUser(email, password);
-    if (token) {
-      const userData = { id: "123", email }; 
-      await login(token, userData); 
-      router.replace("/"); 
+    const res = await loginUser(email, password);
+  
+    if (res?.token && res?.user) {
+      const { token, user } = res;
+      await login(token, user);
+  
+      // Navigate based on role
+      if (user.role === "admin") {
+        router.replace("/restaurantAdminScreen");
+      } else if (user.role === "restaurant") {
+        router.replace("/shopOwner");
+      } else {
+        router.replace("/");
+      }
     } else {
       alert("Invalid credentials");
     }
   };
+  
 
   return (
     <View style={styles.container}>

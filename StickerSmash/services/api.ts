@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const API_URL = "http://192.168.2.1:5000/auth";
+const API_URL = "http://172.20.38.28:5000/auth";
 
 export const signupUser = async (name: string, email: string, password: string, role: string) => {
   try {
@@ -32,7 +32,8 @@ export const loginUser = async (email: string, password: string) => {
     if (!response.ok) throw new Error(data.message || "Login failed");
 
     await AsyncStorage.setItem("authToken", data.token); // Store token
-    return data.token;
+    await AsyncStorage.setItem("user", JSON.stringify(data.user));
+    return { token: data.token, user: data.user };
     
   } catch (error) {
     console.error(error);
@@ -47,3 +48,12 @@ export const logoutUser = async () => {
 export const getAuthToken = async () => {
   return await AsyncStorage.getItem("authToken");
 };
+
+
+import axios from 'axios';
+
+const API = axios.create({
+  baseURL: 'http://172.20.38.28', 
+});
+
+export default API;

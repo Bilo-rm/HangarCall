@@ -5,7 +5,7 @@ export default function Favorite() {
     <View
       style={styles.container}
     >
-      <Text style={styles.text}>Favorit screen</Text>
+      <Text style={styles.text}>ShopOwner screen</Text>
     </View>
   );
 }

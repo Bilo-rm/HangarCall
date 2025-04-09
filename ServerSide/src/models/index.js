@@ -18,6 +18,7 @@ const Restaurant = sequelize.define("Restaurant", {
   name: { type: DataTypes.STRING, allowNull: false },
   location: { type: DataTypes.STRING, allowNull: false },
   image: { type: DataTypes.STRING, allowNull: true },
+  suspended: { type: DataTypes.BOOLEAN, defaultValue: false },
 });
 
 const Menu = sequelize.define("Menu", {
@@ -35,11 +36,51 @@ const Cart = sequelize.define("Cart", {
   quantity: { type: DataTypes.INTEGER, defaultValue: 1 }
 });
 
-User.hasMany(Cart);
-Cart.belongsTo(User);
-Restaurant.hasMany(Menu);
-Menu.belongsTo(Restaurant);
+const Order = sequelize.define("Order", {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  userId: { type: DataTypes.UUID, allowNull: false, references: { model: 'Users', key: 'id' } },
+  total: { type: DataTypes.FLOAT, allowNull: false },
+  status: {
+    type: DataTypes.ENUM("pending", "completed", "cancelled"),
+    defaultValue: "pending",
+  }
+});
+
+const OrderItem = sequelize.define("OrderItem", {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  orderId: { type: DataTypes.UUID, allowNull: false, references: { model: 'Orders', key: 'id' } },
+  menuItemId: { type: DataTypes.UUID, allowNull: false },
+  quantity: { type: DataTypes.INTEGER, defaultValue: 1 },
+  price: { type: DataTypes.FLOAT, allowNull: false },
+});
+
+///  User → Orders, Cart
+User.hasMany(Order, { foreignKey: 'userId' });
+Order.belongsTo(User, { foreignKey: 'userId' });
+
+User.hasMany(Cart, { foreignKey: 'userId' });
+Cart.belongsTo(User, { foreignKey: 'userId' });
+
+
+//  Cart → Menu
+Cart.belongsTo(Menu, { foreignKey: 'menuItemId', as: 'Menu' });
+Menu.hasMany(Cart, { foreignKey: 'menuItemId', as: 'Carts' }); // optional alias
+
+
+//  Order → OrderItem
+Order.hasMany(OrderItem, { foreignKey: 'orderId' });
+OrderItem.belongsTo(Order, { foreignKey: 'orderId' });
+
+
+//  OrderItem → Menu
+OrderItem.belongsTo(Menu, { foreignKey: 'menuItemId', as: 'Menu' });
+Menu.hasMany(OrderItem, { foreignKey: 'menuItemId', as: 'OrderItems' });
+
+
+//  Menu → Restaurant
+Menu.belongsTo(Restaurant, { foreignKey: 'restaurantId', as: 'Restaurant' });
+Restaurant.hasMany(Menu, { foreignKey: 'restaurantId', as: 'Menus' });
 
 sequelize.sync({ alter: true });
 
-module.exports = { User, Restaurant, Menu, Cart };
+module.exports = { User, Restaurant, Menu, Cart, Order, OrderItem,sequelize };

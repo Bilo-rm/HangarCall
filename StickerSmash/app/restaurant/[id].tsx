@@ -1,7 +1,7 @@
 import { View, Text, Image, FlatList, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useAuth } from "../../context/AuthContext";
 import { useState, useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 
 
@@ -19,12 +19,13 @@ export default function RestaurantDetail() {
   const [menu, setMenu] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [basket, setBasket] = useState<MenuItem[]>([]);
-  const { isAuthenticated } = useAuth();
+
 
   useEffect(() => {
     const fetchMenu = async () => {
       try {
-        const response = await fetch(`http://192.168.2.1:5000/menus/${id}/menu`);
+        
+        const response = await fetch(`http://172.20.38.28:5000/menus/${id}/menu`);
         const data = await response.json();
         setMenu(data); 
       } catch (error) {
@@ -37,17 +38,45 @@ export default function RestaurantDetail() {
     fetchMenu();
   }, [id]);
 
-  const addToBasket = (item: MenuItem) => {
-    setBasket((prevBasket) => [...prevBasket, item]);
+
+    const addToBasket = async (item: MenuItem) => {
+      try {
+        const token = await AsyncStorage.getItem("authToken");
+        const response = await fetch("http://172.20.38.28:5000/cart/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            menuItemId: item.id,
+            quantity: 1,
+          }),
+        });
+    
+        if (!response.ok) {
+          throw new Error("Failed to add item to cart");
+        }
+    
+        const cartItem = await response.json();
+        
+        
+        setBasket((prevBasket) => [...prevBasket, { ...item, cartId: cartItem.id }]);
+      } catch (error) {
+        console.error("Error adding to cart:", error);
+      }
+    };
+    
+    if (loading) {
+      return (
+        <View style={styles.container}>
+          <ActivityIndicator size="large" color="#0000ff" />
+        </View>
+      );
   };
 
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#0000ff" />
-      </View>
-    );
-  }
+
+  
 
   return (
     <View style={styles.container}>

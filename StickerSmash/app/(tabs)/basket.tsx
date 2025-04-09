@@ -1,17 +1,25 @@
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
+import { View, Text, Image, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../context/AuthContext";
 import { useState, useEffect } from "react";
 
-const API_URL = "http://192.168.2.1:5000";
+const API_URL = "http://172.20.38.28:5000";
+
+
 
 interface CartItem {
   id: string;
   menuItemId: string;
-  name: string;
-  price: number;
   quantity: number;
+  Menu: {
+    name: string;
+    price: number;
+  };
+  userId: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
+
 
 export default function BasketScreen() {
   const router = useRouter();
@@ -30,7 +38,7 @@ export default function BasketScreen() {
 
     
     try {
-      const response = await fetch('http://192.168.2.1:5000/cart', {
+      const response = await fetch(`${API_URL}/cart`, {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
@@ -87,7 +95,7 @@ export default function BasketScreen() {
 
   // Calculate total
   const total = cartItems.reduce(
-    (sum, item) => sum + (item.price * item.quantity), 
+    (sum, item) => sum + (item.Menu.price * item.quantity), 
     0
   );
 
@@ -114,8 +122,9 @@ export default function BasketScreen() {
           renderItem={({ item }) => (
             <View style={styles.itemContainer}>
               <View style={styles.itemInfo}>
-                <Text style={styles.itemName}>{item.name}</Text>
-                <Text>${item.price ? item.price.toFixed(2) : 'N/A'} × {item.quantity}</Text>
+                <Image source={{ uri: item.Menu.image }} style={styles.image}/>
+                <Text style={styles.itemName}>{item.Menu.name}</Text>
+                <Text>${item.Menu.price ? item.Menu.price.toFixed(2) : 'N/A'} × {item.quantity}</Text>
               </View>
               <TouchableOpacity 
                 style={styles.removeButton}
@@ -132,11 +141,33 @@ export default function BasketScreen() {
       <View style={styles.totalContainer}>
         <Text style={styles.totalText}>Total: ${total.toFixed(1)}</Text>
         <TouchableOpacity 
-          style={styles.checkoutButton}
-          onPress={() => router.push('/checkout')}
-        >
-          <Text style={styles.checkoutText}>Proceed to Checkout</Text>
-        </TouchableOpacity>
+  style={styles.checkoutButton}
+  onPress={async () => {
+    try {
+      const response = await fetch(`${API_URL}/cart/checkout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Checkout failed");
+      }
+
+      Alert.alert("Success", "Order placed successfully!");
+      fetchCart(); // Refresh cart (to clear it)
+    } catch (error) {
+      Alert.alert("Error", error.message);
+    }
+  }}
+>
+  <Text style={styles.checkoutText}>Proceed to Checkout</Text>
+</TouchableOpacity>
+
       </View>
     </View>
   );
@@ -169,6 +200,12 @@ const styles = StyleSheet.create({
   },
   itemInfo: {
     flex: 1,
+  },
+  image: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 15,
   },
   itemName: {
     fontSize: 16,

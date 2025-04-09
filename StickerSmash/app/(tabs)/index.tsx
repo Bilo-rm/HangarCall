@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, FlatList, Image, TextInput, TouchableOpacity, A
 import { useState, useEffect } from "react";
 import { useRouter } from "expo-router";
 
-const API_URL = "http://192.168.2.1:5000";
+const API_URL = "http://172.20.38.28:5000";
 
 export default function HomeScreen() {
   const [search, setSearch] = useState("");
