@@ -46,37 +46,58 @@ exports.checkout = async (req, res) => {
   const t = await sequelize.transaction();
   try {
     const userId = req.user.id;
+
+    // Fetch cart items with menu and restaurant info
     const cartItems = await Cart.findAll({
       where: { userId },
-      include: [{ model: Menu, as: 'Menu' }],
+      include: [
+        { model: Menu, as: 'Menu', include: [{ model: Restaurant, as: 'Restaurant' }] }
+      ]
     });
 
     if (!cartItems.length) return res.status(400).json({ message: "Cart is empty" });
 
-    const total = cartItems.reduce((sum, item) => {
-      return sum + (item.quantity * item.Menu.price);
-    }, 0);
+    // Group cart items by restaurantId
+    const itemsByRestaurant = {};
+    cartItems.forEach(item => {
+      const restaurantId = item.Menu.restaurantId;
+      if (!itemsByRestaurant[restaurantId]) {
+        itemsByRestaurant[restaurantId] = [];
+      }
+      itemsByRestaurant[restaurantId].push(item);
+    });
 
-    const order = await Order.create({ userId, total }, { transaction: t });
+    // Create an order for each restaurant
+    const createdOrders = [];
+    for (const restaurantId in itemsByRestaurant) {
+      const items = itemsByRestaurant[restaurantId];
+      const total = items.reduce((sum, item) => sum + (item.quantity * item.Menu.price), 0);
 
-    for (const item of cartItems) {
-      await OrderItem.create({
-        orderId: order.id,
-        menuItemId: item.menuItemId,
-        quantity: item.quantity,
-        price: item.Menu.price
-      }, { transaction: t });
+      const order = await Order.create({ userId, total, restaurantId }, { transaction: t });
+
+      for (const item of items) {
+        await OrderItem.create({
+          orderId: order.id,
+          menuItemId: item.menuItemId,
+          quantity: item.quantity,
+          price: item.Menu.price
+        }, { transaction: t });
+      }
+
+      createdOrders.push(order);
     }
 
+    // Clear the cart
     await Cart.destroy({ where: { userId }, transaction: t });
 
     await t.commit();
-    res.json({ message: "Checkout successful", orderId: order.id });
+    res.json({ message: "Checkout successful", orders: createdOrders.map(o => o.id) });
   } catch (error) {
     await t.rollback();
     res.status(500).json({ error: error.message });
   }
 };
+
 
 exports.getOrders = async (req, res) => {
   try {

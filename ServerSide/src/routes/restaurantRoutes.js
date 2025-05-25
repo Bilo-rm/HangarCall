@@ -4,7 +4,8 @@ const  authMiddleware  = require("../middleware/authMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
 const router = express.Router();
 
-router.post("/", authMiddleware, roleMiddleware(["admin"]) , addRestaurant);
+router.post("/", authMiddleware, roleMiddleware(["admin", "restaurant"]), addRestaurant);
+
 router.get("/", getRestaurants);
 router.get("/:id", getRestaurant);
 router.put("/:id", updateRestaurant);

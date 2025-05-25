@@ -19,7 +19,9 @@ const Restaurant = sequelize.define("Restaurant", {
   location: { type: DataTypes.STRING, allowNull: false },
   image: { type: DataTypes.STRING, allowNull: true },
   suspended: { type: DataTypes.BOOLEAN, defaultValue: false },
+  userId: { type: DataTypes.UUID, allowNull: false, references: { model: 'Users', key: 'id' } }, // 👈 Add this line
 });
+
 
 const Menu = sequelize.define("Menu", {
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
@@ -43,8 +45,10 @@ const Order = sequelize.define("Order", {
   status: {
     type: DataTypes.ENUM("pending", "completed", "cancelled"),
     defaultValue: "pending",
-  }
+  },
+  restaurantId: { type: DataTypes.UUID, allowNull: false, references: { model: 'Restaurants', key: 'id' } } // ✅ Add this line
 });
+
 
 const OrderItem = sequelize.define("OrderItem", {
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
@@ -80,6 +84,11 @@ Menu.hasMany(OrderItem, { foreignKey: 'menuItemId', as: 'OrderItems' });
 //  Menu → Restaurant
 Menu.belongsTo(Restaurant, { foreignKey: 'restaurantId', as: 'Restaurant' });
 Restaurant.hasMany(Menu, { foreignKey: 'restaurantId', as: 'Menus' });
+
+// Restaurant belongs to User
+Restaurant.belongsTo(User, { foreignKey: 'userId', as: 'Owner' });
+User.hasOne(Restaurant, { foreignKey: 'userId', as: 'OwnedRestaurant' });
+
 
 sequelize.sync({ alter: true });
 

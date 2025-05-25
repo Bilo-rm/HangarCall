@@ -1,0 +1,7 @@
+based on the changed update the shopowner.
+you have to pass the correct userid from the context i belive.
+files changed:
+app.js
+resturantOwnerroutes
+resturantOwnerController
+

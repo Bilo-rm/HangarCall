@@ -2,18 +2,29 @@ const { Restaurant } = require("../models");
 
 exports.addRestaurant = async (req, res) => {
   try {
-    const { name, location, image  } = req.body;
+    const { name, location, image, userId } = req.body;
+
     if (!name || !location) {
       return res.status(400).json({ message: "Name and location are required" });
     }
 
-    const restaurant = await Restaurant.create({ name, location,image  });
+    let ownerId = userId;  // Admin can assign
+    if (req.user.role === 'restaurant') {
+      ownerId = req.user.id;  // Restaurant owner creates their own
+    }
+
+    if (!ownerId) {
+      return res.status(400).json({ message: "Restaurant owner userId is required" });
+    }
+
+    const restaurant = await Restaurant.create({ name, location, image, userId: ownerId });
     res.status(201).json({ message: "Restaurant added", restaurant });
   } catch (error) {
     console.error("Error adding restaurant:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 
 
 exports.getRestaurants = async (req, res) => {

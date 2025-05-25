@@ -2,7 +2,7 @@ import { View, Text, FlatList, StyleSheet, ActivityIndicator, Alert,Image  } fro
 import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 
-const API_URL = "http://172.20.38.28:5000";
+const API_URL = "http://172.20.13.134:5000";
 
 interface OrderItem {
   quantity: number;
