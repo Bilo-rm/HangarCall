@@ -25,7 +25,7 @@ export default function RestaurantDetail() {
     const fetchMenu = async () => {
       try {
         
-        const response = await fetch(`http://172.20.13.134:5000/menus/${id}/menu`);
+        const response = await fetch(`http://172.20.35.169:5000/menus/${id}/menu`);
         const data = await response.json();
         setMenu(data); 
       } catch (error) {
@@ -42,7 +42,7 @@ export default function RestaurantDetail() {
     const addToBasket = async (item: MenuItem) => {
       try {
         const token = await AsyncStorage.getItem("authToken");
-        const response = await fetch("http://172.20.13.134:5000/cart/", {
+        const response = await fetch("http://172.20.35.169:5000/cart/", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

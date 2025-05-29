@@ -42,44 +42,68 @@ exports.getRestaurantOrders = async (req, res) => {
 
 
 // Update order status (only if the order contains their restaurant's menu items)
+
+
 exports.updateOrderStatus = async (req, res) => {
   const { orderId } = req.params;
   const { status } = req.body;
   const ownerId = req.user.id;
 
   try {
+    // Ensure the owner owns a restaurant
     const restaurant = await Restaurant.findOne({ where: { userId: ownerId } });
-    if (!restaurant) return res.status(403).json({ message: "You don't own a restaurant." });
+    if (!restaurant) {
+      return res.status(403).json({ message: "You don't own a restaurant." });
+    }
 
+    // Find the order and include related OrderItems and Menu (which contains restaurantId)
     const order = await Order.findByPk(orderId, {
       include: {
         model: OrderItem,
+        as: 'OrderItems',
         include: {
           model: Menu,
           as: 'Menu'
-        },
-        as: 'OrderItems'
+        }
       }
     });
 
-    if (!order) return res.status(404).json({ message: "Order not found." });
+    if (!order) {
+      return res.status(404).json({ message: "Order not found." });
+    }
 
-    // Check if this order contains items from this restaurant
+    // Check if the order belongs to this restaurant
     const containsItems = order.OrderItems.some(
       item => item.Menu.restaurantId === restaurant.id
     );
 
     if (!containsItems) {
-      return res.status(403).json({ message: "You can't modify this order." });
+      return res.status(403).json({ message: "You cannot modify this order." });
     }
 
-    order.status = status;
+    // Map frontend status values to backend ENUM values
+    const validStatusMapping = {
+      confirmed: "completed",      // Change this to your ENUM or actual flow
+      delivered: "completed",
+      cancel: "cancelled",
+      pending: "pending",
+      completed: "completed",
+      cancel: "cancelled"
+    };
+
+    const mappedStatus = validStatusMapping[status.toLowerCase()];
+
+    if (!mappedStatus) {
+      return res.status(400).json({ message: "Invalid status value provided." });
+    }
+
+    order.status = mappedStatus;
     await order.save();
 
-    res.json({ message: "Order status updated.", order });
+    res.json({ message: `Order status updated to ${mappedStatus}.`, order });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Error updating order status." });
+    console.error("Error updating order status:", err);
+    res.status(500).json({ message: "An error occurred while updating the order status." });
   }
 };
 

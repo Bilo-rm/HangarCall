@@ -3,7 +3,7 @@ import { useRouter } from "expo-router";
 import { useAuth } from "../../context/AuthContext";
 import { useState, useEffect } from "react";
 
-const API_URL = "http://172.20.13.134:5000";
+const API_URL = "http://172.20.35.169:5000";
 
 
 

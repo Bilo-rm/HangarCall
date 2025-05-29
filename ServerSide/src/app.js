@@ -6,6 +6,7 @@ const menuRoutes = require("./routes/menuRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const locationRoutes = require("./routes/locationRoutes");
 const restaurantOwnerRoutes = require("./routes/restaurantownerRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -16,5 +17,7 @@ app.use("/menus", menuRoutes);
 app.use("/cart", cartRoutes);
 app.use("/location", locationRoutes);
 app.use("/restaurant-owner", restaurantOwnerRoutes);
+app.use("/admin", adminRoutes);
+
 
 module.exports = app;
