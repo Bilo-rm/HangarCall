@@ -178,6 +178,7 @@ export default function AdminScreen() {
       resetUserForm();
       fetchUsers();
       fetchStats();
+      fetchUnassignedUsers(); // Refresh unassigned users when new user is created
       Alert.alert('Success', 'User created successfully');
     } catch (err: any) {
       Alert.alert('Error', err.response?.data?.message || 'Error creating user');
@@ -194,6 +195,7 @@ export default function AdminScreen() {
       setUserModalVisible(false);
       resetUserForm();
       fetchUsers();
+      fetchUnassignedUsers(); // Refresh unassigned users when user role changes
       Alert.alert('Success', 'User updated successfully');
     } catch (err: any) {
       Alert.alert('Error', err.response?.data?.message || 'Error updating user');
@@ -214,6 +216,7 @@ export default function AdminScreen() {
               await axios.delete(`${API_URL}/admin/users/${id}`);
               fetchUsers();
               fetchStats();
+              fetchUnassignedUsers();
               Alert.alert('Success', 'User deleted successfully');
             } catch (err: any) {
               Alert.alert('Error', err.response?.data?.message || 'Error deleting user');
@@ -237,6 +240,12 @@ export default function AdminScreen() {
 
   // Restaurant management functions
   const handleAddRestaurant = async () => {
+    // Validate that a user is selected for new restaurants
+    if (!newRestaurantData.userId) {
+      Alert.alert('Error', 'Please select a restaurant owner. Every restaurant must be assigned to a user with restaurant role.');
+      return;
+    }
+
     try {
       await axios.post(`${API_URL}/admin/restaurants`, newRestaurantData);
       setRestaurantModalVisible(false);
@@ -244,7 +253,7 @@ export default function AdminScreen() {
       fetchRestaurants();
       fetchUnassignedUsers();
       fetchStats();
-      Alert.alert('Success', 'Restaurant created successfully');
+      Alert.alert('Success', 'Restaurant created and assigned successfully');
     } catch (err: any) {
       Alert.alert('Error', err.response?.data?.message || 'Error creating restaurant');
     }
@@ -339,6 +348,11 @@ export default function AdminScreen() {
     setAssignData({ restaurantId: '', userId: '' });
   };
 
+  // Check if restaurant creation is possible
+  const canCreateRestaurant = () => {
+    return unassignedUsers.length > 0;
+  };
+
   // Render functions (keeping the same UI)
   const renderDashboard = () => (
     <ScrollView style={styles.tabContent}>
@@ -420,8 +434,25 @@ export default function AdminScreen() {
     <View style={styles.tabContent}>
       <View style={styles.buttonRow}>
         <TouchableOpacity
-          onPress={() => setRestaurantModalVisible(true)}
-          style={[styles.addButton, { backgroundColor: '#4CAF50', flex: 1, marginRight: 5 }]}
+          onPress={() => {
+            if (!canCreateRestaurant()) {
+              Alert.alert(
+                'Cannot Create Restaurant', 
+                'No available restaurant users. Please create a user with "restaurant" role first, or assign existing restaurants to current restaurant users.'
+              );
+              return;
+            }
+            setRestaurantModalVisible(true);
+          }}
+          style={[
+            styles.addButton, 
+            { 
+              backgroundColor: canCreateRestaurant() ? '#4CAF50' : '#9E9E9E', 
+              flex: 1, 
+              marginRight: 5 
+            }
+          ]}
+          disabled={!canCreateRestaurant()}
         >
           <Text style={styles.addButtonText}>🏪 Add Restaurant</Text>
         </TouchableOpacity>
@@ -432,6 +463,14 @@ export default function AdminScreen() {
           <Text style={styles.addButtonText}>🔗 Assign</Text>
         </TouchableOpacity>
       </View>
+
+      {!canCreateRestaurant() && (
+        <View style={styles.warningContainer}>
+          <Text style={styles.warningText}>
+            ⚠️ No unassigned restaurant users available. Create users with "restaurant" role to add new restaurants.
+          </Text>
+        </View>
+      )}
 
       <FlatList
         data={restaurants}
@@ -606,25 +645,37 @@ export default function AdminScreen() {
             style={styles.input}
           />
 
-          {!newRestaurantData.id && unassignedUsers.length > 0 && (
+          {!newRestaurantData.id && (
             <>
-              <Text style={styles.pickerLabel}>Assign to User (Optional):</Text>
-              <Picker
-                selectedValue={newRestaurantData.userId}
-                onValueChange={(value) => setNewRestaurantData({ ...newRestaurantData, userId: value })}
-                style={styles.picker}
-              >
-                <Picker.Item label="No Owner" value="" />
-                {unassignedUsers.map((user) => (
-                  <Picker.Item key={user.id} label={`${user.name} (${user.email})`} value={user.id} />
-                ))}
-              </Picker>
+              <Text style={styles.pickerLabel}>Assign to Restaurant Owner (Required):</Text>
+              {unassignedUsers.length > 0 ? (
+                <Picker
+                  selectedValue={newRestaurantData.userId}
+                  onValueChange={(value) => setNewRestaurantData({ ...newRestaurantData, userId: value })}
+                  style={styles.picker}
+                >
+                  <Picker.Item label="Select restaurant owner..." value="" />
+                  {unassignedUsers.map((user) => (
+                    <Picker.Item key={user.id} label={`${user.name} (${user.email})`} value={user.id} />
+                  ))}
+                </Picker>
+              ) : (
+                <Text style={styles.noUsersText}>
+                  No unassigned restaurant users available. Please create a user with "restaurant" role first.
+                </Text>
+              )}
             </>
           )}
 
           <TouchableOpacity
             onPress={newRestaurantData.id ? handleUpdateRestaurant : handleAddRestaurant}
-            style={[styles.modalButton, { backgroundColor: '#4CAF50' }]}
+            style={[
+              styles.modalButton, 
+              { 
+                backgroundColor: (newRestaurantData.id || newRestaurantData.userId) ? '#4CAF50' : '#9E9E9E' 
+              }
+            ]}
+            disabled={!newRestaurantData.id && !newRestaurantData.userId}
           >
             <Text style={styles.modalButtonText}>
               {newRestaurantData.id ? 'Update' : 'Add'}
@@ -694,6 +745,8 @@ export default function AdminScreen() {
     </View>
   );
 }
+
+
 
 const styles = StyleSheet.create({
   container: {
@@ -895,5 +948,35 @@ const styles = StyleSheet.create({
     color: 'red',
     textAlign: 'center',
     fontSize: 16,
+  },
+
+  warningContainer: {
+    backgroundColor: '#FFF3CD',
+    borderColor: '#FFEAA7',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    margin: 10,
+  },
+  warningText: {
+    color: '#856404',
+    textAlign: 'center',
+    fontSize: 14,
+  },
+  noUsersText: {
+    color: '#f44336',
+    textAlign: 'center',
+    fontSize: 14,
+    fontStyle: 'italic',
+    marginVertical: 10,
+    padding: 10,
+    backgroundColor: '#FFEBEE',
+    borderRadius: 8,
+  },
+  pickerLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    marginTop: 10,
   },
 });

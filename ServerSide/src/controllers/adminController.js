@@ -180,39 +180,37 @@ class AdminController {
     try {
       const { name, location, image, userId } = req.body;
 
-      // Validate required fields
-      if (!name || !location) {
+      // Validate required fields - userId is now required
+      if (!name || !location || !userId) {
         return res.status(400).json({
           success: false,
-          message: 'Restaurant name and location are required'
+          message: 'Restaurant name, location, and restaurant owner (userId) are required'
         });
       }
 
-      // If userId is provided, validate the user exists and has restaurant role
-      if (userId) {
-        const user = await User.findByPk(userId);
-        if (!user) {
-          return res.status(400).json({
-            success: false,
-            message: 'User not found'
-          });
-        }
+      // Validate the user exists and has restaurant role
+      const user = await User.findByPk(userId);
+      if (!user) {
+        return res.status(400).json({
+          success: false,
+          message: 'Restaurant owner user not found'
+        });
+      }
 
-        if (user.role !== 'restaurant') {
-          return res.status(400).json({
-            success: false,
-            message: 'User must have restaurant role to own a restaurant'
-          });
-        }
+      if (user.role !== 'restaurant') {
+        return res.status(400).json({
+          success: false,
+          message: 'Selected user must have restaurant role to own a restaurant'
+        });
+      }
 
-        // Check if user already owns a restaurant
-        const existingRestaurant = await Restaurant.findOne({ where: { userId } });
-        if (existingRestaurant) {
-          return res.status(400).json({
-            success: false,
-            message: 'User already owns a restaurant'
-          });
-        }
+      // Check if user already owns a restaurant
+      const existingRestaurant = await Restaurant.findOne({ where: { userId } });
+      if (existingRestaurant) {
+        return res.status(400).json({
+          success: false,
+          message: 'Selected user already owns a restaurant'
+        });
       }
 
       // Create restaurant
@@ -236,7 +234,7 @@ class AdminController {
 
       res.status(201).json({
         success: true,
-        message: 'Restaurant created successfully',
+        message: 'Restaurant created and assigned successfully',
         data: restaurantWithOwner
       });
     } catch (error) {
